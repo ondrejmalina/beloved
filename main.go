@@ -2,8 +2,15 @@ package main
 
 import (
 	"fmt"
-	"github.com/spf13/cobra"
+	"log"
 	"os"
+
+	"github.com/charmbracelet/huh"
+	"github.com/spf13/cobra"
+)
+
+var (
+	path string
 )
 
 var rootCmd = &cobra.Command{
@@ -11,11 +18,25 @@ var rootCmd = &cobra.Command{
 	Short: "A simple CLI tool for tracking favorite (or 'beloved') filesystem paths",
 	Long: `beloved is a CLI tool for tracking of favorite filesystem paths.
 You can add or remove favorite paths to it using commands.`,
-	Run:  greeting,
+	Run: greeting,
 }
 
 func greeting(cmd *cobra.Command, args []string) {
-	fmt.Println("beloved!<3")
+	form := huh.NewForm(
+		huh.NewGroup(
+			huh.NewSelect[string]().
+				Title("Beloved ❤️").
+				Options(huh.NewOptions("United States", "Canada", "Mexico")...).
+				Value(&path),
+		),
+	)
+
+	err := form.Run()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(path)
 }
 
 func main() {
