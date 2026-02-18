@@ -2,104 +2,74 @@ package cfg
 
 import (
 	"bufio"
-	"bytes"
 	"errors"
-	"path/filepath"
 	"fmt"
 	"os"
+	"path/filepath"
 )
 
 const (
-	default_cfg_file string = "beloved.cfg"
-	default_cfg_folder string = "beloved"
+	defaultCfgFile   = "beloved.cfg"
+	defaultCfgFolder = "beloved"
 )
 
 type Config struct {
-	Path string
+	Path    string
 	Beloved []string
 }
 
-func CreateConfig(path string) Config {
-	return Config{path, []string{}}
+// New returns a Config with the path set. Use an empty string for default OS path.
+func New(path string) *Config {
+	return &Config{Path: path}
 }
 
-// Searches for config on path. If the path is an empty string, loads the
-// config from the OS default config path. If it does not exist on the
-// default path, it creates it.
-func (c *Config) LoadConfig() error {
-	if c.path == "" {
-		if err := c.loadDefaultConfig(); err != nil {
-			return fmt.Errorf("failed to read default config: %w", err)
+// Load populates the Config. It handles default pathing and file creation.
+func (c *Config) Load() error {
+	if c.Path == "" {
+		dd, err := os.UserConfigDir()
+		if err != nil {
+			return fmt.Errorf("user config dir unavailable: %w", err)
 		}
+		c.Path = filepath.Join(dd, defaultCfgFolder, defaultCfgFile)
 	}
 
-	if err := c.readConfig(); err != nil {
-		return fmt.Errorf("failed to read config on path %s: %w", c.path, err)
-	}
-	return nil
-
-}
-
-func (c *Config) loadDefaultConfig() error {
-	err := c.getDefaultConfigPath()
-	if err != nil {
-		return fmt.Errorf("failed to get default cfg path: %w", err)
-	}
-
-	if err = c.readConfig(); err == nil {
-		return nil
-	}
-
+	err := c.read()
 	if errors.Is(err, os.ErrNotExist) {
-		if err = c.createDefaultConfig(); err != nil {
-			return fmt.Errorf("failed to create default config file: %w", err)
+		if err := c.init(); err != nil {
+			return err
+		}
+		return c.read()
+	}
+	return err
+}
+
+func (c *Config) read() error {
+	f, err := os.Open(c.Path)
+	if err != nil {
+		return err
+	}
+	defer f.Close()
+
+	// NOTE: Clear existing data to prevent duplicates on re-load
+	c.Beloved = []string{}
+
+	scanner := bufio.NewScanner(f)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if line != "" {
+			c.Beloved = append(c.Beloved, line)
 		}
 	}
-
-	if err = c.readConfig(); err != nil {
-		return fmt.Errorf("failed to read config on path %s: %w", c.path, err)
-	}
-	return nil
+	return scanner.Err()
 }
 
-// Return OS default config path
-func (c *Config) getDefaultConfigPath() error {
-	dd, err := os.UserConfigDir()
-	if err != nil {
-		return fmt.Errorf("failed to read os default config path: %w", err)
+func (c *Config) init() error {
+	if err := os.MkdirAll(filepath.Dir(c.Path), 0755); err != nil {
+		return fmt.Errorf("mkdir failed: %w", err)
 	}
-	c.path = filepath.Join(dd, default_cfg_folder, default_cfg_file)
-	return nil
+	f, err := os.Create(c.Path)
+	if err != nil {
+		return fmt.Errorf("create file failed: %w", err)
+	}
+	return f.Close()
 }
-
-// Reads cfg file from path to configs slice of beloved paths.
-func (c *Config) readConfig() error {
-	// TODO: Add validation of correct cfg format
-	data, err := os.ReadFile(c.path)
-	if err != nil {
-		return fmt.Errorf("failed to read config %s: %w", c.path, err)
-	}
-
-	scanner := bufio.NewScanner(bytes.NewReader(data))
-	for scanner.Scan() {
-		c.beloved = append(c.beloved, scanner.Text())
-	}
-	return nil
-}
-
-func (c *Config) createDefaultConfig() error {
-	err := os.MkdirAll(filepath.Dir(c.path), 0660)
-	if err != nil {
-		return fmt.Errorf("failed to create default config folder %s: %w", filepath.Dir(c.path), err)
-	}
-
-	f, err := os.Create(c.path)
-	if err != nil {
-		return fmt.Errorf("failed to create default config file %s: %w", c.path, err)
-	}
-	if err = f.Close(); err != nil {
-		return fmt.Errorf("failed to close the default config file %s: %w", c.path, err)
-	}
-	return nil
-}
-

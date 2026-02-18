@@ -5,7 +5,6 @@ import (
 	"log"
 	"os"
 
-	"github.com/ondrejmalina/beloved/internal/cfg"
 	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
 )
