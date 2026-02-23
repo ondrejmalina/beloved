@@ -21,6 +21,17 @@ You can add or remove favorite paths to it using commands.`,
 	Run: greeting,
 }
 
+var addCmd = &cobra.Command{
+	Use:   "add [path]",
+	Short: "Add a new path",
+	Long:  "Add a new path to the beloved",
+	Run:   addPath,
+}
+
+func init() {
+	rootCmd.AddCommand(addCmd)
+}
+
 func greeting(cmd *cobra.Command, args []string) {
 	form := huh.NewForm(
 		huh.NewGroup(
@@ -35,6 +46,9 @@ func greeting(cmd *cobra.Command, args []string) {
 	if err != nil {
 		log.Fatal(err)
 	}
+}
+
+func addPath(cmd *cobra.Command, args []string) {
 }
 
 func main() {
