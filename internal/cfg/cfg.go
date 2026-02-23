@@ -18,32 +18,27 @@ type Config struct {
 	Beloved []string
 }
 
-// New returns a Config with the path set. Use an empty string for default OS path.
-func New(path string) *Config {
-	return &Config{Path: path}
+// Check if application config exists in OS default configuration dir.
+// Create it if not.
+func Init() (*Config, error) {
+	cfg := Config{}
+
+	dd, err := os.UserConfigDir()
+	if err != nil {
+		return nil, fmt.Errorf("user config dir unavailable: %w", err)
+	}
+	cfg.Path = filepath.Join(dd, defaultCfgFolder, defaultCfgFile)
+
+	if _, err := os.Stat(cfg.Path); errors.Is(err, os.ErrNotExist) {
+		if err := cfg.new(); err != nil {
+			return nil, fmt.Errorf("failed to create config: %w", err)
+		}
+	}
+
+	return &cfg, nil
 }
 
-// Load populates the Config. It handles default pathing and file creation.
 func (c *Config) Load() error {
-	if c.Path == "" {
-		dd, err := os.UserConfigDir()
-		if err != nil {
-			return fmt.Errorf("user config dir unavailable: %w", err)
-		}
-		c.Path = filepath.Join(dd, defaultCfgFolder, defaultCfgFile)
-	}
-
-	err := c.read()
-	if errors.Is(err, os.ErrNotExist) {
-		if err := c.init(); err != nil {
-			return err
-		}
-		return c.read()
-	}
-	return err
-}
-
-func (c *Config) read() error {
 	f, err := os.Open(c.Path)
 	if err != nil {
 		return err
@@ -63,7 +58,7 @@ func (c *Config) read() error {
 	return scanner.Err()
 }
 
-func (c *Config) init() error {
+func (c *Config) new() error {
 	if err := os.MkdirAll(filepath.Dir(c.Path), 0755); err != nil {
 		return fmt.Errorf("mkdir failed: %w", err)
 	}
