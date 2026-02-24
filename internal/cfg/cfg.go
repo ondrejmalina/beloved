@@ -71,19 +71,18 @@ func (c *Config) Load() error {
 }
 
 // Add path to the Config file. Create the file if it does not exist
-func (c *Config) Add(path string) (n, error) {
+func (c *Config) Add(path string) (int, error) {
 	// TODO: Update the permissions
-	f, err := os.OpenFile(c.Path, os.O_APPEND | os.O_CREATE, 0755)
+	f, err := os.OpenFile(c.Path, os.O_APPEND|os.O_WRONLY, 0755)
 	if err != nil {
 		return 0, fmt.Errorf("failed to open the config file: %w", err)
 	}
 
-	n, err := f.Write([]byte(path))
+
+	n, err := f.Write([]byte(path+"\n"))
 	if err != nil {
-		return 0, fmt.Errorf("failed to write to the config file: %w", err) 
+		return 0, fmt.Errorf("failed to write to the config file: %w", err)
 	}
 
 	return n, err
 }
-
-

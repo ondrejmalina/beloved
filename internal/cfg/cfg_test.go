@@ -10,6 +10,20 @@ func TestLoadDefaultConfig(t *testing.T) {
 	cfg, err := cfg.Init()
 	t.Log(cfg)
 	if err != nil {
-		t.Error("failed to create or read default cfg: %w", err)
+		t.Error(err)
 	}
+}
+
+func TestWriteDefaultConfig(t *testing.T) {
+	cfg, err := cfg.Init()
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(cfg)
+	
+	n, err := cfg.Add("/workspaces/beloved/")
+	if err != nil {
+		t.Error(err)
+	}
+	t.Log(n)
 }
