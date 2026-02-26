@@ -7,6 +7,8 @@ import (
 
 	"github.com/charmbracelet/huh"
 	"github.com/spf13/cobra"
+
+	"github.com/ondrejmalina/beloved/internal/cfg"
 )
 
 var (
@@ -21,22 +23,53 @@ You can add or remove favorite paths to it using commands.`,
 	Run: greeting,
 }
 
+var addCmd = &cobra.Command{
+	Use:   "add [path]",
+	Short: "Add a new path",
+	Long:  "Add a new path to the beloved",
+	Args:  cobra.MinimumNArgs(1),
+	Run:   addPath,
+}
+
+func init() {
+	rootCmd.AddCommand(addCmd)
+}
+
 func greeting(cmd *cobra.Command, args []string) {
+	c, err := cfg.Init()
+	if err != nil {
+		log.Fatal(err)
+	}
+	err = c.Load()
+	if err != nil {
+		log.Fatal(err)
+	}
 	form := huh.NewForm(
 		huh.NewGroup(
 			huh.NewSelect[string]().
 				Title("Beloved ❤️").
-				Options(huh.NewOptions("United States", "Canada", "Mexico")...).
+				Options(huh.NewOptions(c.Beloved...)...).
 				Value(&path),
 		),
 	)
 
-	err := form.Run()
+	err = form.Run()
 	if err != nil {
 		log.Fatal(err)
 	}
+	if err := os.Chdir(path); err != nil {
+		fmt.Println(err)
+	}
+	fmt.Print(path)
+}
 
-	fmt.Println(path)
+func addPath(cmd *cobra.Command, args []string) {
+	p := args[0]
+	c, err := cfg.Init()
+	if err != nil {
+		log.Fatal(err)
+	}
+	c.Add(p)
 }
 
 func main() {
