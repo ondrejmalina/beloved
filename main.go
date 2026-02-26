@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	testPath string
+	path string
 )
 
 var rootCmd = &cobra.Command{
@@ -49,7 +49,7 @@ func greeting(cmd *cobra.Command, args []string) {
 			huh.NewSelect[string]().
 				Title("Beloved ❤️").
 				Options(huh.NewOptions(c.Beloved...)...).
-				Value(&testPath),
+				Value(&path),
 		),
 	)
 
@@ -57,19 +57,19 @@ func greeting(cmd *cobra.Command, args []string) {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err := os.Chdir(testPath); err != nil {
+	if err := os.Chdir(path); err != nil {
 		fmt.Println(err)
 	}
-	fmt.Printf("\ncd%s ", testPath)
+	fmt.Print(path)
 }
 
 func addPath(cmd *cobra.Command, args []string) {
-	path := args[0]
+	p := args[0]
 	c, err := cfg.Init()
 	if err != nil {
 		log.Fatal(err)
 	}
-	c.Add(path)
+	c.Add(p)
 }
 
 func main() {
