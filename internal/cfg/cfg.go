@@ -18,8 +18,8 @@ type Config struct {
 	Beloved []string
 }
 
-// Check if application config exists in OS default configuration dir.
-// Create it if not.
+// Initiate Config. If it does not exist, it is created in the
+// OS default configuration dir.
 func Init() (*Config, error) {
 	cfg := Config{}
 
@@ -57,9 +57,6 @@ func (c *Config) Load() error {
 	}
 	defer f.Close()
 
-	// NOTE: Clear existing data to prevent duplicates on re-load
-	c.Beloved = []string{}
-
 	scanner := bufio.NewScanner(f)
 	for scanner.Scan() {
 		line := scanner.Text()
@@ -78,8 +75,7 @@ func (c *Config) Add(path string) (int, error) {
 		return 0, fmt.Errorf("failed to open the config file: %w", err)
 	}
 
-
-	n, err := f.Write([]byte(path+"\n"))
+	n, err := f.Write([]byte(path + "\n"))
 	if err != nil {
 		return 0, fmt.Errorf("failed to write to the config file: %w", err)
 	}
